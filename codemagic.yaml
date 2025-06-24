@@ -45,6 +45,7 @@ workflows:
     publishing:
       email:
         recipients:
+          - netanel.kalfa@kalfa.me
           - admin@nm-digitalhub.com
         notify:
           success: true
@@ -93,6 +94,7 @@ workflows:
     publishing:
       email:
         recipients:
+          - netanel.kalfa@kalfa.me
           - admin@nm-digitalhub.com
         notify:
           success: true
