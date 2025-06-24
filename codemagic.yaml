@@ -4,7 +4,7 @@ workflows:
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
-      app_store_connect: codemagic
+      app_store_connect: NMDigitalHUB
     environment:
       ios_signing:
         distribution_type: app_store
@@ -82,8 +82,11 @@ workflows:
           failure: true
       app_store_connect:
         auth: integration
-        submit_to_testflight: true # Upload to TestFlight automatically
-        # submit_to_app_store: false # Set to true for direct App Store submission
+        submit_to_testflight: true
+        expire_build_submitted_for_review: true
+        beta_groups:
+          - Internal Testing
+        # submit_to_app_store: false
 
   # Optional: Build for testing without App Store upload
   react-native-ios-testing:
