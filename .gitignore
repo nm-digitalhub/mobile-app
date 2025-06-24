@@ -17,6 +17,10 @@ web-build/
 *.key
 *.mobileprovision
 
+# iOS signing files (include these for Codemagic)
+!ios/certificates/*.cer
+!ios/certificates/*.mobileprovision
+
 # Metro
 .metro-health-check*
 
