@@ -9,35 +9,64 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: nm-digitalhub.com
+      groups:
+        - codemagic
       vars:
-        BUNDLE_ID: "nm-digitalhub.com"  
+        BUNDLE_ID: "nm-digitalhub.com"
         XCODE_WORKSPACE: "NMDigitalHub.xcworkspace"
         XCODE_SCHEME: "NMDigitalHub"
         APP_NAME: "NM-DigitalHUB"
+        APP_STORE_APPLE_ID: 6747678252
       node: 18.17.0
       xcode: latest
       cocoapods: default
+    triggering:
+      events:
+        - push
+        - tag
+      branch_patterns:
+        - pattern: main
+          include: true
+        - pattern: master
+          include: true
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - ios/Pods
     scripts:
-      - name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
-        script: keychain initialize
-      - name: Fetch signing files automatically
+      - name: Set up keychain
+        script: |
+          keychain initialize
+      - name: Fetch signing files
         script: |
           app-store-connect fetch-signing-files $BUNDLE_ID --type IOS_APP_STORE --create
       - name: Add certificates to keychain
-        script: keychain add-certificates  
+        script: |
+          keychain add-certificates
       - name: Set up code signing
-        script: xcode-project use-profiles
+        script: |
+          xcode-project use-profiles
       - name: Install npm dependencies
         script: |
-          npm ci # faster, reliable, reproducible builds
+          npm install
+      - name: Set Info.plist values
+        script: |
+          PLIST=$CM_BUILD_DIR/ios/$XCODE_SCHEME/Info.plist
+          PLIST_BUDDY=/usr/libexec/PlistBuddy
+          $PLIST_BUDDY -c "Add :ITSAppUsesNonExemptEncryption bool false" $PLIST
       - name: Install CocoaPods dependencies
         script: |
           cd ios && pod install
+      - name: Increment build number
+        script: |
+          cd $CM_BUILD_DIR/ios
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID")
+          agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
       - name: Build ipa for distribution
         script: |
           xcode-project build-ipa \
-            --workspace ios/$XCODE_WORKSPACE \
-            --scheme $XCODE_SCHEME
+            --workspace "$CM_BUILD_DIR/ios/$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
@@ -64,32 +93,50 @@ workflows:
     environment:
       ios_signing:
         distribution_type: ad_hoc
-        bundle_identifier: com.nmdigitalhub.mobile
+        bundle_identifier: nm-digitalhub.com
+      groups:
+        - codemagic
       vars:
-        BUNDLE_ID: "com.nmdigitalhub.mobile"
+        BUNDLE_ID: "nm-digitalhub.com"
         XCODE_WORKSPACE: "NMDigitalHub.xcworkspace"
         XCODE_SCHEME: "NMDigitalHub"
       node: 18.17.0
       xcode: latest
       cocoapods: default
+    triggering:
+      events:
+        - pull_request
+      branch_patterns:
+        - pattern: '*'
+          include: true
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - ios/Pods
     scripts:
       - name: Set up keychain
-        script: keychain initialize
+        script: |
+          keychain initialize
       - name: Fetch signing files for ad-hoc
-        script: app-store-connect fetch-signing-files $BUNDLE_ID --type IOS_APP_ADHOC --create
+        script: |
+          app-store-connect fetch-signing-files $BUNDLE_ID --type IOS_APP_ADHOC --create
       - name: Add certificates to keychain
-        script: keychain add-certificates
+        script: |
+          keychain add-certificates
       - name: Set up code signing
-        script: xcode-project use-profiles
+        script: |
+          xcode-project use-profiles
       - name: Install npm dependencies
-        script: npm ci
+        script: |
+          npm ci
       - name: Install CocoaPods dependencies
-        script: cd ios && pod install
+        script: |
+          cd ios && pod install
       - name: Build ipa for testing
         script: |
           xcode-project build-ipa \
-            --workspace ios/$XCODE_WORKSPACE \
-            --scheme $XCODE_SCHEME
+            --workspace "$CM_BUILD_DIR/ios/$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
