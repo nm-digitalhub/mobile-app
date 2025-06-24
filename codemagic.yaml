@@ -8,9 +8,9 @@ workflows:
     environment:
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.nmdigitalhub.app
+        bundle_identifier: nm-digitalhub.com
       vars:
-        BUNDLE_ID: "com.nmdigitalhub.app"  
+        BUNDLE_ID: "nm-digitalhub.com"  
         XCODE_WORKSPACE: "NMDigitalHub.xcworkspace"
         XCODE_SCHEME: "NMDigitalHub"
         APP_NAME: "NM-DigitalHUB"
@@ -62,9 +62,9 @@ workflows:
     environment:
       ios_signing:
         distribution_type: ad_hoc
-        bundle_identifier: com.nmdigitalhub.app
+        bundle_identifier: nm-digitalhub.com
       vars:
-        BUNDLE_ID: "com.nmdigitalhub.app"
+        BUNDLE_ID: "nm-digitalhub.com"
         XCODE_WORKSPACE: "NMDigitalHub.xcworkspace"
         XCODE_SCHEME: "NMDigitalHub"
       node: 18.17.0
