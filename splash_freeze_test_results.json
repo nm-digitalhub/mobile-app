@@ -1,0 +1,106 @@
+{
+  "timestamp": "2025-06-24T00:33:03.765Z",
+  "summary": {
+    "totalTests": 8,
+    "criticalIssues": 5,
+    "warningIssues": 3,
+    "passingTests": 2,
+    "overallRisk": "HIGH"
+  },
+  "detailedResults": [
+    {
+      "test": "SecureStore Hang",
+      "status": "FAILED_AS_EXPECTED",
+      "duration": 5006,
+      "error": "SecureStore timeout",
+      "impact": "Splash screen would freeze indefinitely without timeout"
+    },
+    {
+      "test": "API Verification Timeout",
+      "status": "TIMEOUT_PROTECTION_WORKING",
+      "duration": 8008,
+      "error": "Auth verification timeout",
+      "impact": "Timeout protection prevents indefinite hanging"
+    },
+    {
+      "test": "Cascade Failure",
+      "status": "CRITICAL_RISK",
+      "duration": 2003,
+      "failures": [
+        {
+          "step": "getAuthToken",
+          "error": "getAuthToken timeout",
+          "time": 1002
+        },
+        {
+          "step": "authVerify",
+          "error": "Auth verification failed",
+          "time": 1002
+        },
+        {
+          "step": "removeAuthToken",
+          "error": "removeAuthToken timeout",
+          "time": 2003
+        }
+      ],
+      "impact": "Multiple timeouts could exceed splash screen protection"
+    },
+    {
+      "test": "Network Unreachable",
+      "status": "TIMEOUT_TOO_LONG",
+      "duration": 30030,
+      "error": "Network timeout",
+      "impact": "30-second timeout far exceeds splash screen protection"
+    },
+    {
+      "test": "Memory Pressure",
+      "status": "WITHIN_TIMEOUT",
+      "duration": 7000,
+      "impact": "Within splash timeout limits"
+    },
+    {
+      "test": "LogRocket Timing",
+      "status": "TIMING_ISSUE",
+      "initOrder": [
+        {
+          "event": "splash_hide",
+          "time": 50
+        },
+        {
+          "event": "logrocket_init",
+          "time": 101
+        }
+      ],
+      "impact": "LogRocket may initialize after splash screen, missing early events"
+    },
+    {
+      "test": "Production vs Development",
+      "status": "SIGNIFICANT_DIFFERENCES",
+      "differences": [
+        {
+          "environment": "Development",
+          "verboseLogging": true,
+          "secureStoreEncryption": "weaker",
+          "networkTimeouts": "lenient",
+          "memoryManagement": "relaxed",
+          "riskLevel": "LOWER"
+        },
+        {
+          "environment": "Production",
+          "verboseLogging": false,
+          "secureStoreEncryption": "stronger",
+          "networkTimeouts": "stricter",
+          "memoryManagement": "aggressive",
+          "riskLevel": "HIGHER"
+        }
+      ],
+      "impact": "Production builds have higher risk of hanging operations"
+    },
+    {
+      "test": "Timeout Cleanup",
+      "status": "MEMORY_LEAK_RISK",
+      "activeTimeouts": 1,
+      "impact": "Uncleaned timeouts could cause memory leaks"
+    }
+  ]
+}

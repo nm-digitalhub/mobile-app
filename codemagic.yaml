@@ -1,0 +1,99 @@
+workflows:
+  react-native-ios:
+    name: React Native iOS - NM DigitalHub
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: codemagic
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.nmdigitalhub.app
+      vars:
+        BUNDLE_ID: "com.nmdigitalhub.app"  
+        XCODE_WORKSPACE: "NMDigitalHub.xcworkspace"
+        XCODE_SCHEME: "NMDigitalHub"
+        APP_NAME: "NM-DigitalHUB"
+      node: 18.17.0
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
+        script: keychain initialize
+      - name: Fetch signing files
+        script: app-store-connect fetch-signing-files $BUNDLE_ID --type IOS_APP_STORE --create
+      - name: Use system default keychain
+        script: keychain add-certificates
+      - name: Set up code signing settings on Xcode project
+        script: xcode-project use-profiles
+      - name: Install npm dependencies
+        script: |
+          npm ci # faster, reliable, reproducible builds
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios && pod install
+      - name: Build ipa for distribution
+        script: |
+          xcode-project build-ipa \
+            --workspace ios/$XCODE_WORKSPACE \
+            --scheme $XCODE_SCHEME
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    publishing:
+      email:
+        recipients:
+          - admin@nm-digitalhub.com
+        notify:
+          success: true
+          failure: true
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true # Upload to TestFlight automatically
+        # submit_to_app_store: false # Set to true for direct App Store submission
+
+  # Optional: Build for testing without App Store upload
+  react-native-ios-testing:
+    name: React Native iOS - Testing Build
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    environment:
+      ios_signing:
+        distribution_type: ad_hoc
+        bundle_identifier: com.nmdigitalhub.app
+      vars:
+        BUNDLE_ID: "com.nmdigitalhub.app"
+        XCODE_WORKSPACE: "NMDigitalHub.xcworkspace"
+        XCODE_SCHEME: "NMDigitalHub"
+      node: 18.17.0
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Set up keychain
+        script: keychain initialize
+      - name: Fetch signing files for ad-hoc
+        script: app-store-connect fetch-signing-files $BUNDLE_ID --type IOS_APP_ADHOC --create
+      - name: Add certificates to keychain
+        script: keychain add-certificates
+      - name: Set up code signing
+        script: xcode-project use-profiles
+      - name: Install npm dependencies
+        script: npm ci
+      - name: Install CocoaPods dependencies
+        script: cd ios && pod install
+      - name: Build ipa for testing
+        script: |
+          xcode-project build-ipa \
+            --workspace ios/$XCODE_WORKSPACE \
+            --scheme $XCODE_SCHEME
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      email:
+        recipients:
+          - admin@nm-digitalhub.com
+        notify:
+          success: true
+          failure: true
