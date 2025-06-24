@@ -20,10 +20,13 @@ workflows:
     scripts:
       - name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
         script: keychain initialize
-      - name: Import signing certificate and provisioning profile
+      - name: Fetch signing files automatically
         script: |
-          keychain add-certificates ios/certificates/ios_distribution.cer
-          xcode-project use-profiles ios/certificates/NMDigitalHub.mobileprovision
+          app-store-connect fetch-signing-files $BUNDLE_ID --type IOS_APP_STORE --create
+      - name: Add certificates to keychain
+        script: keychain add-certificates  
+      - name: Set up code signing
+        script: xcode-project use-profiles
       - name: Install npm dependencies
         script: |
           npm ci # faster, reliable, reproducible builds
